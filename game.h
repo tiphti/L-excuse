@@ -8,6 +8,8 @@ public:
 	Game();
 	void run();
 private:
+	void startingGame();
+	void startHorloge();
 	void processEvents();
 	void Game::update(sf::Time deltaTime);
 	void render();
