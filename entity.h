@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <vector>
 #pragma once
 
 class Entity
@@ -11,7 +12,6 @@ public:
 	sf::Vector2f getVelocity() const;
 	virtual void draw(sf::RenderWindow &window) = 0;
 private:
-	std::vector<Entity*> tabEntity;
 	sf::Vector2f mVelocity;
 };
 
@@ -30,12 +30,13 @@ class Texte : public Entity
 {
 public:
 	Texte();
-	Texte(sf::Text text, std::string words, int size, std::string color);
+	Texte(sf::Text text, sf::Font font, std::string words, int size, std::string color);
 	//void setUp(int size, std::string color);
 	void draw(sf::RenderWindow &window);
 	void setPosition(float posX, float posY);
 private:
 	sf::Text mText;
+	sf::Font mFont;
 	std::string mWords;
 	int mSize;
 	std::string mColor;
@@ -50,4 +51,14 @@ public:
 private:
 	std::string mObjName;
 	sf::Sprite mSprite;
+};
+
+class Inventaire
+{
+public:
+	Inventaire();
+	void add(Entity *s);
+	void drawInventaire(sf::RenderWindow &window);
+private:
+	std::vector<Entity*> tabInventaire;
 };

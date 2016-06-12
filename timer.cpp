@@ -1,13 +1,47 @@
-#include "timer.h"
-using namespace sf;
+#include "Timer.h"
 
-Timer::Timer()
+Timer::Timer() : myElapsedTime(0.0f), myState(Paused)
+{}
+
+void Timer::Start()
 {
+	if (myState != Started) // On ne lance pas le timer si il est déja lancé
+	{
+		myClock.restart();
+		myState = Started;
+	}
 }
 
-float Timer::getTime() // retourne la duree ecoulee en secondes
+void Timer::Pause()
 {
-	Time time = mClock.getElapsedTime();
-	float sec = time.asSeconds();
-	return sec;
+	if (myState != Paused) // On ne mets pas en pause le timer si il est déja en pause
+	{
+		myState = Paused;
+		sf::Time t = myClock.getElapsedTime();
+		float sec = t.asMilliseconds();
+		myElapsedTime += sec;
+	}
+}
+
+void Timer::Reinitialize()
+{
+	myClock.restart();
+	Pause();
+	myElapsedTime = 0.0f;
+}
+
+float Timer::GetTime()
+{
+	float time;
+	if (myState == Paused)
+	{
+		time = myElapsedTime;
+	}
+	else
+	{
+		sf::Time t = myClock.getElapsedTime();
+		float sec = t.asSeconds();
+		time = sec + myElapsedTime;
+	}
+	return time;
 }
