@@ -1,9 +1,12 @@
-#include <cstdlib>
 #include <SFML/Graphics.hpp>
+#include <cstdlib>
 #include <sstream>
-#include <windows.h> //Sleep
+#include <windows.h> // Sleep
 #include <iostream>
+#include <string>
 #include <stdlib.h>
+#include <iterator>
+#include <vector>
 #include "game.h"
 #include "timer.h"
 #include "entity.h"
@@ -15,9 +18,9 @@ using namespace std;
 const sf::Time TimePerFrame = sf::seconds(1.f / 60.f);
 const float PlayerSpeed = 100.f;
 const int FONT_SIZE = 80;
-const int WIDTH = 800; //largeur de la fenetre
-const int HEIGHT = 600; //hauteur de la fenetre
-const float START_TIME = 7.0f;
+const int WIDTH = 800;
+const int HEIGHT = 600;
+//const float START_TIME = 7.0f;
 std::string const red = "red";
 std::string const white = "white";
 std::string const pink = "pink";
@@ -33,7 +36,7 @@ template <class T> string convertitNbEnString(T nb)
 }
 
 Game::Game() :
-	mWindow(sf::VideoMode(WIDTH, HEIGHT, 32), "super jeu trop cool")
+	mWindow(VideoMode(WIDTH, HEIGHT, 32), "super jeu trop cool")
 {
 	mWindow.setFramerateLimit(60);
 	//mPlayer.setPosition(100.f, 100.f);
@@ -136,16 +139,29 @@ void Game::run()
 	/* FIN config de l'horloge affichee dans le jeu */
 	introGame();
 	secondes.Start(); // mise en marche de l'horloge
+	std::vector<Item> tabAll, tabInvent;
+	Inventaire all_items(tabAll);
+	Inventaire inventaire(tabInvent);
+
+	Sprite tapis_plat;
+	Sprite tapis_retrousse;
+	Item tapisPlat("tapis_plat", tapis_plat);
+	Item tapisRetrousse("tapis_retrousse", tapis_retrousse);
+	all_items.add(tapisPlat);
+	all_items.add(tapisRetrousse);
+
 	while (mWindow.isOpen())
 	{
-		drawClock(text, font, secondes, minutes);
+		string minutesString = convertitNbEnString((int)minutes);
+		string secondesString = convertitNbEnString((int)secondes.GetTime());
+		Texte horlogeTxt(text, font, minutesString + "h: " + secondesString + "min", 30, white);
+		render(horlogeTxt, all_items);
 		if (convertitNbEnString((int)secondes.GetTime()) == "60")
 		{
 			++minutes;
 			secondes.Reinitialize();
 			secondes.Start();
 		}
-		processEvents();
 		/*
 		timeSinceLastUpdate += clock.restart();
 		while (timeSinceLastUpdate > TimePerFrame)
@@ -154,19 +170,17 @@ void Game::run()
 		processEvents();
 		update(TimePerFrame);
 		}*/
-		//render();
-		if (convertitNbEnString((int)secondes.GetTime()) == "50")
+		/* (convertitNbEnString((int)secondes.GetTime()) == "50")
 		{
 			secondes.Pause();
 			gameOver();
-		}
+		}*/
 	}
 }
 
 void Game::introGame()
 {
-	cout << "debut starting game" << endl;
-	mState = running;
+	cout << "debut intro game" << endl;
 	Font font;
 	Text zzz;
 	if (!font.loadFromFile("bboron.ttf"))
@@ -179,17 +193,7 @@ void Game::introGame()
 	mText.draw(mWindow);
 	mWindow.display();
 	Sleep(1000); // pause de 3s
-	cout << "fin starting game" << endl;
-}
-
-void Game::drawClock(sf::Text text, sf::Font font, Timer timer, int minutes)
-{
-	string minutesString = convertitNbEnString((int)minutes);
-	string secondesString = convertitNbEnString((int)timer.GetTime());
-	Texte horlogeString(text, font, minutesString + "h: " + secondesString + "min", 30, white);
-	mWindow.clear();
-	horlogeString.draw(mWindow);
-	mWindow.display();
+	cout << "fin intro game" << endl;
 }
 
 //void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
@@ -206,31 +210,27 @@ void Game::handlePlayerInput(bool isPressed)
 		mIsMovingRight = isPressed;*/
 }
 
-void Game::processEvents()
+void Game::processEvents(Inventaire all_items)
 {
-	sf::Event event;
+	Event event;
 	while (mWindow.pollEvent(event))
 	{
 		switch (event.type)
 		{
-		case Event::MouseButtonPressed:
-		{
-			if (event.mouseButton.button == Mouse::Left)
-			{
-				handlePlayerInput(true);
-				break;
-			}
-		}
+		case Event::Closed:
+			mWindow.close();
+			break;
 		case Event::MouseButtonReleased:
 		{
 			if (event.mouseButton.button == Mouse::Left)
 			{
-				handlePlayerInput(false);
+				cout << "click gauche ok" << endl;
+				//all_items.handleClickLeft(mWindow);
+				all_items.handleClickLeft(mWindow, isOnSprite);
 				break;
 			}
 		}
-		case sf::Event::Closed:
-			mWindow.close();
+		default:
 			break;
 		}
 	}
@@ -250,16 +250,15 @@ void Game::update(sf::Time deltaTime)
 	//mPlayer.move(movement * deltaTime.asSeconds());
 }
 
-void Game::render()
+void Game::render(Texte horlogeTxt, Inventaire all_items)
 {
-	//Personnage mPlayer("mPlayer");
 	//Personnage maman("maman");
-	//Personnage chat("chat");
 	mWindow.clear();
-	//mPlayer.drawPerso(mWindow);
-	//maman.drawPerso(mWindow);
-	//mSprite.draw(mWindow);
+	horlogeTxt.draw(mWindow);
+	//maman.draw(mWindow);
+	all_items.drawInventaire(mWindow);
 	mWindow.display();
+	processEvents(all_items);
 }
 
 void Game::gameOver()
@@ -272,13 +271,11 @@ void Game::gameOver()
 	}
 	Text game_over("GAME OVER\n YOU LOSE\n  (haha)", font, 100);
 	FloatRect textRect = game_over.getGlobalBounds();
-#pragma region info_getLocalBounds
 	/* getLocalBounds:
 	.left pour obtenir la coordonnée gauche du rectangle où est inscrit le texte
 	.top pour la coordonnée haut du rectangle
 	.width et .height pour respectivement la largeur et la hauteur du rectangle */
-#pragma endregion info_getLocalBounds
-	game_over.setPosition((WIDTH / 2.0f) - (textRect.width/2.0f), (HEIGHT / 2.0f) - (textRect.height/2.0f));
+	game_over.setPosition((WIDTH / 2.0f) - (textRect.width/2.0f), (HEIGHT / 2.0f) - (textRect.height/2.0f)); // texte centre
 	Texte end(game_over, font, "GAME OVER\n YOU LOSE\n  (haha)", 100, white);
 	mWindow.clear();
 	end.draw(mWindow);

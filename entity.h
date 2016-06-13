@@ -6,11 +6,11 @@ class Entity
 {
 public:
 	Entity();
-	virtual void setPosition(float posX, float posY) = 0;
 	void setVelocity(sf::Vector2f velocity);
 	void setVelocity(float vx, float vy);
 	sf::Vector2f getVelocity() const;
 	virtual void draw(sf::RenderWindow &window) = 0;
+	virtual void setPosition(float posX, float posY) = 0;
 private:
 	sf::Vector2f mVelocity;
 };
@@ -42,23 +42,32 @@ private:
 	std::string mColor;
 };
 
-class ObjetManipulable : public Entity
+class Item : public Entity
 {
 public:
-	ObjetManipulable(std::string name);
+	Item(std::string name, sf::Sprite sprite);
 	void draw(sf::RenderWindow &window);
 	void setPosition(float posX, float posY);
+	void setScale(float scaleX, float scaleY);
+	sf::FloatRect get_global_bounds();
+	//bool isMouseOnSprite();
 private:
-	std::string mObjName;
+	std::string mItemName;
 	sf::Sprite mSprite;
 };
 
 class Inventaire
 {
 public:
-	Inventaire();
-	void add(Entity *s);
+	Inventaire(std::vector<Item> tab);
+	void add(Item item);
+	void remove();
+	void swap(Item item);
 	void drawInventaire(sf::RenderWindow &window);
+	bool isMouseOnThisSprite(sf::RenderWindow &window, Item item);
+	void processEvents(sf::RenderWindow &window);
+	bool ismouseonAsprite(sf::RenderWindow &window);
+	void handleClickLeft(sf::RenderWindow &window, bool isOnSprite);
 private:
-	std::vector<Entity*> tabInventaire;
+	std::vector<Item> tabInventaire;
 };
