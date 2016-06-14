@@ -1,5 +1,4 @@
 #include <SFML/Graphics.hpp>
-#include "timer.h"
 #include "entity.h"
 #pragma once
 
@@ -11,16 +10,12 @@ public:
 private:
 	void run();
 	void introGame();
-	//void drawClock(sf::Text text, sf::Font font, Timer timer, int minutes);
-	void processEvents(Inventaire I);
 	void handlePlayerInput(bool isPressed);
+	void processEvents(Inventaire I);
 	void update(sf::Time deltaTime);
-	void render(Texte horlogeTxt, Inventaire I);
+	void render(Texte horlogeTxt, Inventaire all_items);
 	void gameOver();
+	void render(Inventaire I);
 private:
 	sf::RenderWindow mWindow;
-	bool mIsMovingUp;
-	bool mIsMovingDown;
-	bool mIsMovingLeft;
-	bool mIsMovingRight;
 };

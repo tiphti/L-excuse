@@ -1,5 +1,8 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
+#include <string>
 #include <vector>
+#include <memory>
 #pragma once
 
 class Entity
@@ -11,6 +14,7 @@ public:
 	sf::Vector2f getVelocity() const;
 	virtual void draw(sf::RenderWindow &window) = 0;
 	virtual void setPosition(float posX, float posY) = 0;
+	virtual sf::FloatRect get_global_bounds() = 0;
 private:
 	sf::Vector2f mVelocity;
 };
@@ -19,7 +23,7 @@ class Personnage : public Entity
 {
 public:
 	Personnage(std::string name);
-	void draw(sf::RenderWindow &window);
+	void draw(sf::RenderWindow & window);
 	void setPosition(float posX, float posY);
 private:
 	std::string mPersoName;
@@ -34,6 +38,7 @@ public:
 	//void setUp(int size, std::string color);
 	void draw(sf::RenderWindow &window);
 	void setPosition(float posX, float posY);
+	sf::FloatRect get_global_bounds();
 private:
 	sf::Text mText;
 	sf::Font mFont;
@@ -59,15 +64,13 @@ private:
 class Inventaire
 {
 public:
-	Inventaire(std::vector<Item> tab);
-	void add(Item item);
-	void remove();
+	Inventaire();
+	Inventaire(std::unique_ptr<Item> pItem);
+	void add(std::unique_ptr<Item> pItem);
 	void swap(Item item);
 	void drawInventaire(sf::RenderWindow &window);
 	bool isMouseOnThisSprite(sf::RenderWindow &window, Item item);
-	void processEvents(sf::RenderWindow &window);
-	bool ismouseonAsprite(sf::RenderWindow &window);
-	void handleClickLeft(sf::RenderWindow &window, bool isOnSprite);
+	void handleClickLeft(sf::RenderWindow &window);
 private:
-	std::vector<Item> tabInventaire;
+	std::vector<std::unique_ptr<Item>> tabInventaire;
 };

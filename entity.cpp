@@ -32,8 +32,8 @@ sf::Vector2f Entity::getVelocity() const
 	return mVelocity;
 }
 
-Personnage::Personnage(string name):
-	Entity(), mPersoName (name)
+Personnage::Personnage(string name) :
+	Entity(), mPersoName(name)
 {
 }
 
@@ -61,13 +61,13 @@ void Personnage::setPosition(float posX, float posY)
 	mSprite.setPosition(posX, posY);
 }
 
-Texte::Texte():
+Texte::Texte() :
 	Entity()
 {
 }
 
-Texte::Texte(Text text, Font font, string words, int size, string color):
-	Entity(), mText (text), mFont (font), mWords (words), mSize (size), mColor (color)
+Texte::Texte(Text text, Font font, string words, int size, string color) :
+	Entity(), mText(text), mFont(font), mWords(words), mSize(size), mColor(color)
 {
 	int R = 255, V = 255, B = 255;
 	if (mColor == white) { R = 255; V = 255; B = 255; }
@@ -90,8 +90,8 @@ void Texte::setPosition(float posX, float posY)
 	mText.setPosition(posX, posY);
 }
 
-Item::Item(string name, Sprite sprite):
-	Entity(), mItemName (name), mSprite (sprite)
+Item::Item(string name, Sprite sprite) :
+	Entity(), mItemName(name), mSprite(sprite)
 {
 }
 
@@ -138,126 +138,68 @@ FloatRect Item::get_global_bounds()
 	return mSprite.getGlobalBounds();
 }
 
-Inventaire::Inventaire(vector<Item> tab):
-	tabInventaire (tab)
+Inventaire::Inventaire()
 {
 }
 
-void Inventaire::add(Item item)
+Inventaire::Inventaire(unique_ptr<Item> pItem)
 {
-		tabInventaire.push_back(item);
+	add(move(pItem)); //pas de copie
 }
 
-void Inventaire::remove()
+void Inventaire::add(std::unique_ptr<Item> pItem)
 {
-	tabInventaire.pop_back();
+	tabInventaire.push_back(move(pItem));
 }
 
 void Inventaire::swap(Item item)
 {
-	std::swap(item, tabInventaire.back());
+	//std::swap(item, tabInventaire.back());
 }
 
 void Inventaire::drawInventaire(RenderWindow &window)
 {
 	//for (int i = 0; i != tabInventaire.size(); ++i)
-	for (auto i : tabInventaire)
+	for (auto &i : tabInventaire)
 	{
-		i.draw(window);
+		i->draw(window);
 	}
 }
 
-void Inventaire::processEvents(RenderWindow &window)
-{/*
-	Event event;
-	while (window.pollEvent(event))
-	{
-		switch (event.type)
-		{
-		case Event::Closed:
-			window.close();
-			break;
-		case Event::MouseButtonReleased:
-		{
-			if (event.mouseButton.button == Mouse::Left)
-			{
-				//if (ismouseonAsprite(window) == true)
-				{
-					cout << "click gauche ok" << endl;
-					//cout << "click gauche ok: mouse on A sprite ok" << endl;
-					//all_items.handleClickOnSprite(all_items.ismouseonAsprite(mWindow));
-					//handleClickLeft(window);
-					for (Item item : tabInventaire)
-					{
-						if (isMouseOnThisSprite(window, item) == true)
-						{
-							swap(item, tabInventaire.back());
-							remove();
-							cout << "swap ok" << endl;
-						}
-						else { cout << "missed sprite" << endl; }
-					}
-				}
-				//else { cout << "click gauche ok: missed, are you dumb ?" << endl; }
-				//handlePlayerInput(false);
-				break;
-			}
-		}
-		default:
-			break;
-		}
-	}*/
-}
-
+/* retourne TRUE si la souris passe sur l'item en argument */
 bool Inventaire::isMouseOnThisSprite(RenderWindow &window, Item item)
 {
 	FloatRect rect = item.get_global_bounds();
-	if ((rect.left <= (Mouse::getPosition().x - window.getPosition().x))
+	return ((rect.left <= (Mouse::getPosition().x - window.getPosition().x))
 		&& ((Mouse::getPosition().x - window.getPosition().x) <= (rect.left + rect.width))
 		&& (rect.top <= (Mouse::getPosition().y - window.getPosition().y))
-		&& ((Mouse::getPosition().y - window.getPosition().y) <= (rect.top + rect.height)))
-	{
-		return true;
-	}
-	else { return false; }
+		&& ((Mouse::getPosition().y - window.getPosition().y) <= (rect.top + rect.height)));
 }
-
+/*
 bool Inventaire::ismouseonAsprite(RenderWindow &window)
 {
-	for (Item it : tabInventaire)
-	{
-		//if (isMouseOnSprite(window, it) == true) {
-		FloatRect rect = it.get_global_bounds();
-		if ((rect.left <= (Mouse::getPosition().x - window.getPosition().x))
-			&& ((Mouse::getPosition().x - window.getPosition().x) <= (rect.left + rect.width))
-			&& (rect.top <= (Mouse::getPosition().y - window.getPosition().y))
-			&& ((Mouse::getPosition().y - window.getPosition().y) <= (rect.top + rect.height)))
-		{
-			return true;
-		}
-		else { return false; }
-	}
-}
-
-void Inventaire::handleClickLeft(RenderWindow &window, bool isOnSprite)
+for (auto &it : tabInventaire)
 {
-	if (!tabInventaire.empty())
+if (isMouseOnThisSprite(window, *it))
+{
+return true;
+}
+else { return false; }
+}
+}*/
+
+void Inventaire::handleClickLeft(RenderWindow &window)
+{
+	for (auto &it : tabInventaire)
 	{
-		for (auto it : tabInventaire)
+		FloatRect rect = it->get_global_bounds();
+		if (isMouseOnThisSprite(window, *it))
 		{
-			//Item item = *it;
-			FloatRect rect = it.get_global_bounds();
-			if ((rect.left <= (Mouse::getPosition().x - window.getPosition().x))
-				&& ((Mouse::getPosition().x - window.getPosition().x) <= (rect.left + rect.width))
-				&& (rect.top <= (Mouse::getPosition().y - window.getPosition().y))
-				&& ((Mouse::getPosition().y - window.getPosition().y) <= (rect.top + rect.height)))
-			{
-				std::swap(it, tabInventaire.back());
-				tabInventaire.pop_back();
-				cout << "swap + remove ok" << endl;
-			}
-			else { cout << "missed" << endl; }
+			std::swap(it, tabInventaire.back());
+			tabInventaire.pop_back();
+			cout << "swap + remove ok" << endl;
 		}
+		else { cout << "missed" << endl; }
 	}
 }
 

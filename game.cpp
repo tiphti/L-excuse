@@ -27,8 +27,8 @@ std::string const pink = "pink";
 std::string const black = "black";
 #pragma endregion variables
 
-template <class T> string convertitNbEnString(T nb)
 /* Ce template permet de convertir un nombre (float, int, double) en string */
+template <class T> string convertitNbEnString(T nb)
 {
 	ostringstream s;
 	s << nb;
@@ -126,42 +126,47 @@ void Game::run()
 {
 	//sf::Clock clock;
 	//sf::Time timeSinceLastUpdate = sf::Time::Zero;
-	/* DEBUT configuration de l'horloge affichee dans le jeu */
+
+	/* configuration de l'horloge affichee dans le jeu */
 	Timer secondes;
 	Text text;
 	Font font;
-	int minutes = 6; // il est 6h dans le jeu lorsque le personnage se reveil
+	int minutes = 6; // il est 6h dans le jeu lorsque le personnage se reveille
 	text.setStyle(Text::Bold);
 	if (!font.loadFromFile("digital-7.ttf"))
 	{
 		cerr << "Erreur durant le chargement de la fonte" << endl;
 	}
-	/* FIN config de l'horloge affichee dans le jeu */
-	introGame();
-	secondes.Start(); // mise en marche de l'horloge
-	std::vector<Item> tabAll, tabInvent;
-	Inventaire all_items(tabAll);
-	Inventaire inventaire(tabInvent);
 
+	//introGame();
+	secondes.Start(); // mise en marche de l'horloge
+
+					  /* initialisation du jeu */
+	Inventaire inventaire;
+	Inventaire all_items;
+	//Inventaire all_items(move(pTapisPlat));
 	Sprite tapis_plat;
 	Sprite tapis_retrousse;
-	Item tapisPlat("tapis_plat", tapis_plat);
-	Item tapisRetrousse("tapis_retrousse", tapis_retrousse);
-	all_items.add(tapisPlat);
-	all_items.add(tapisRetrousse);
+	auto pTapisPlat = make_unique<Item>("tapis_plat", tapis_plat);
+	auto pTapisRetrousse = make_unique<Item>("tapis_retrousse", tapis_retrousse);
+	all_items.add(move(pTapisRetrousse));
 
 	while (mWindow.isOpen())
 	{
+		/* affichage de l'horloge + mise en place des minutes */
 		string minutesString = convertitNbEnString((int)minutes);
 		string secondesString = convertitNbEnString((int)secondes.GetTime());
 		Texte horlogeTxt(text, font, minutesString + "h: " + secondesString + "min", 30, white);
-		render(horlogeTxt, all_items);
 		if (convertitNbEnString((int)secondes.GetTime()) == "60")
 		{
 			++minutes;
 			secondes.Reinitialize();
 			secondes.Start();
 		}
+
+		render(horlogeTxt, all_items);
+		processEvents(all_items);
+
 		/*
 		timeSinceLastUpdate += clock.restart();
 		while (timeSinceLastUpdate > TimePerFrame)
@@ -172,8 +177,8 @@ void Game::run()
 		}*/
 		/* (convertitNbEnString((int)secondes.GetTime()) == "50")
 		{
-			secondes.Pause();
-			gameOver();
+		secondes.Pause();
+		gameOver();
 		}*/
 	}
 }
@@ -192,22 +197,21 @@ void Game::introGame()
 	mWindow.clear();
 	mText.draw(mWindow);
 	mWindow.display();
-	Sleep(1000); // pause de 3s
+	Sleep(1000); // pause de 1s
 	cout << "fin intro game" << endl;
 }
 
-//void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 void Game::handlePlayerInput(bool isPressed)
 {
 	/*
 	if (key == sf::Keyboard::Z)
-		mIsMovingUp = isPressed;
+	mIsMovingUp = isPressed;
 	else if (key == sf::Keyboard::S)
-		mIsMovingDown = isPressed;
+	mIsMovingDown = isPressed;
 	else if (key == sf::Keyboard::Q)
-		mIsMovingLeft = isPressed;
+	mIsMovingLeft = isPressed;
 	else if (key == sf::Keyboard::D)
-		mIsMovingRight = isPressed;*/
+	mIsMovingRight = isPressed;*/
 }
 
 void Game::processEvents(Inventaire all_items)
@@ -225,8 +229,7 @@ void Game::processEvents(Inventaire all_items)
 			if (event.mouseButton.button == Mouse::Left)
 			{
 				cout << "click gauche ok" << endl;
-				//all_items.handleClickLeft(mWindow);
-				all_items.handleClickLeft(mWindow, isOnSprite);
+				all_items.handleClickLeft(mWindow);
 				break;
 			}
 		}
@@ -235,7 +238,7 @@ void Game::processEvents(Inventaire all_items)
 		}
 	}
 }
-
+/*
 void Game::update(sf::Time deltaTime)
 {
 	sf::Vector2f movement(0.f, 0.f);
@@ -248,17 +251,14 @@ void Game::update(sf::Time deltaTime)
 	if (mIsMovingRight)
 		movement.x += PlayerSpeed;
 	//mPlayer.move(movement * deltaTime.asSeconds());
-}
+}*/
 
 void Game::render(Texte horlogeTxt, Inventaire all_items)
 {
-	//Personnage maman("maman");
 	mWindow.clear();
 	horlogeTxt.draw(mWindow);
-	//maman.draw(mWindow);
 	all_items.drawInventaire(mWindow);
 	mWindow.display();
-	processEvents(all_items);
 }
 
 void Game::gameOver()
@@ -271,11 +271,7 @@ void Game::gameOver()
 	}
 	Text game_over("GAME OVER\n YOU LOSE\n  (haha)", font, 100);
 	FloatRect textRect = game_over.getGlobalBounds();
-	/* getLocalBounds:
-	.left pour obtenir la coordonnée gauche du rectangle où est inscrit le texte
-	.top pour la coordonnée haut du rectangle
-	.width et .height pour respectivement la largeur et la hauteur du rectangle */
-	game_over.setPosition((WIDTH / 2.0f) - (textRect.width/2.0f), (HEIGHT / 2.0f) - (textRect.height/2.0f)); // texte centre
+	game_over.setPosition((WIDTH / 2.0f) - (textRect.width / 2.0f), (HEIGHT / 2.0f) - (textRect.height / 2.0f)); // texte centre
 	Texte end(game_over, font, "GAME OVER\n YOU LOSE\n  (haha)", 100, white);
 	mWindow.clear();
 	end.draw(mWindow);
